@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Remote YouTube Player</title>
+  </head>
+  <body>
+    <form id="ytForm" class="chooser" action="">
+      <label for="url">YouTube video URL: </label>
+      <input id="url" type="text" name="url" value="">
+      <input id="urlSubmit" type="button" name="go" value="Go">
+    </form>
+    <div id="ytPlayer"></div>
+
+    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    <script>
+    var socket = io();
+    </script>
+    <script type="text/javascript">
+      /** YT API **/
+      var tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      var player;
+
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('ytPlayer', {
+          width: '640',
+          height: '360',
+          videoId: '',
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+          }
+        });
+      }
+
+      function onPlayerReady(event) {
+        event.target.playVideo();
+      }
+      var done = false;
+      function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING && !done) {
+          setTimeout(stopVideo, 6000);
+          done = true;
+        }
+      }
+      function stopVideo() {
+        player.stopVideo();
+      }
+      /** /YT API **/
+      var formEl = document.getElementById("ytForm");
+      var iframeEl = document.getElementById("ytFrame");
+      var urlEl = document.getElementById("url");
+      var buttonEl = document.getElementById("urlSubmit");
+
+      formEl.addEventListener("submit", handleSubmit);
+      buttonEl.addEventListener("click", handleSubmit);
+
+      document.addEventListener("DOMContentLoaded", init);
+
+      function init() {
+        var websocket = new WebSocket("ws://128.0.0.1:8008/");
+        websocket.onopen = function (evt) { onOpen(evt); }
+        websocket.onclose = function (evt) { onClose(evt); }
+        websocket.onmessage = function (evt) { onMessage(evt); }
+        websocket.onerror = function (evt) { console.warn(evt); }
+      }
+
+      function onOpen(evt) { console.info("connected!"); }
+      function onClose(evt) { console.warn("disconnected"); }
+      function onMessage(evt) { console.log(evt.data); websocket.close(); }
+
+      function sendMessage(msg) {
+        websocket.send(msg);
+      }
+
+      function trimURL(url) {
+        if(url.indexOf("https://") >= 0 || url.indexOf("http://") >= 0) {
+          url = url.split("://")[1];
+        }
+        if(url.indexOf("youtube.com/") >= 0) {
+          url = url.split("youtube.com/")[1];
+        }
+        if(url.indexOf("watch?") >= 0) {
+          url = url.split("v=")[1];
+          url = url.split("#")[0];
+          url = url.split("&")[0];
+        }
+        if(url.indexOf("youtu.be/") >= 0) {
+          url = url.split("youtu.be/")[1];
+        }
+        return url;
+      }
+
+      function handleSubmit(event) {
+        event.preventDefault();
+        var url = trimURL(urlEl.value);
+        socket.emit('ytURL', url);
+        //player.loadVideoById({"videoId": url});
+      }
+
+      socket.on("ytURL", handleReceiveURL);
+
+      function handleReceiveURL (msg) {
+        player.loadVideoById({"videoId": msg});
+      }
+
+    </script>
+  </body>
+</html>
