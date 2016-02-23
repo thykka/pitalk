@@ -1,21 +1,38 @@
 var cfg = {
-  PORT: 8008
+  PORT: 8888
 };
 
-var app = require("express")();
+//var http = require('http');
+
+var express = require("express");
+var app = express();
 var http = require("http").Server(app);
 var io = require("socket.io")(http);
+var spawn = require('child_process').spawn;
 
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.use(express.static('public'));
+
+var SPEAKING = false;
+
 io.on("connection", function(socket) {
   console.log("Connected: " + socket.client.conn.id + " (" + socket.handshake.headers['user-agent'] + ")");
 
-  socket.on("ytURL", function (msg) {
-    console.log("Received and submitting video ID:", msg);
-    io.emit("ytURL", msg);
+  socket.on("speak", function (message) {
+    if(!SPEAKING) {
+      SPEAKING = true;
+      say(message, function () {
+        message.timestamp = getTimestamp();
+
+        socket.emit("chat", message);
+
+        message.broadcast = socket.client.conn.id;
+        socket.broadcast.emit("broadcast", message);
+      });
+    }
   });
 
   socket.on("disconnect", function () {
@@ -23,6 +40,41 @@ io.on("connection", function(socket) {
   });
 });
 
+function getTimestamp() {
+  var now = new Date();
+  return [
+    now.getHours(), ":",
+    ("0" + now.getMinutes()).substr(-2), ":",
+    ("0" + now.getSeconds()).substr(-2)
+  ].join("");
+}
+
+function say (message, cb) {
+  var cmdName = 'espeak';
+  var options = [
+    "-p75", // pitch
+    "-z", // no pause on end
+    "-s180", // speed in WPM
+    "-k5", // capitals pitch
+    "-x", // phonemes to STDOUT
+    "-v", "en-UK"
+  ];
+  options.push(message.text);
+
+  console.log("Message: " + message.text);
+
+  var espeak = spawn(cmdName, options);
+  espeak.on('error', function(err) { console.log(err); });
+  espeak.stdout.on('data', function(data) { console.log(data.toString()); });
+  espeak.on('close', function() {
+    SPEAKING = false;
+    if(typeof cb === "function") {
+      cb();
+    }
+  });
+}
+
 http.listen(cfg.PORT, function () {
   console.log("Listening on *:" + cfg.PORT);
+  say({"text": "I'm ready."});
 });
