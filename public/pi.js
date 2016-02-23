@@ -17,11 +17,17 @@
     }
   };
 
+  Pi.handleLangChange = function (evt) {
+    Pi.inEl.focus();
+  };
+
   Pi.init = function () {
     Pi.outEl = document.getElementById("pi-output");
     Pi.inEl = document.getElementById("pi-command");
+    Pi.langEl = document.getElementById("pi-lang");
     Pi.btnEl = document.getElementById("pi-send");
     Pi.inEl.addEventListener("keypress", Pi.handleInput);
+    Pi.langEl.addEventListener("change", Pi.handleLangChange);
     Pi.btnEl.addEventListener("click", Pi.handleSend);
 
     Pi.socket = io();
@@ -35,6 +41,7 @@
     window.Pi = Pi;
 
     Pi.printMessage(greeting);
+    Pi.inEl.focus();
   };
 
   Pi.printMessage = function (message) {
@@ -62,10 +69,13 @@
   };
 
   Pi.handleSend = function (evt) {
-    Pi.socket.emit("speak", {
-      "text": Pi.inEl.value
-    });
-    Pi.inEl.value = "";
+    if(Pi.inEl.value !== "") {
+      Pi.socket.emit("speak", {
+        "text": Pi.inEl.value,
+        "lang": Pi.langEl.options[Pi.langEl.selectedIndex].value
+      });
+      Pi.inEl.value = "";
+    }
     Pi.inEl.focus();
   };
 
@@ -79,19 +89,41 @@
   };
 
   Pi.handleReceiveChat = function (message, broadcast) {
-    if(!Pi.PRINTING) {
-      Pi.printMessage([
-        "\n",
-        !message.timestamp ? Pi.timeStamp() : message.timestamp,
-        !message.broadcast ? " <you> " : " <???> ",
-        message.text
-      ].join(""));
+    var rowEl = document.createElement("div");
+    rowEl.classList.add("row");
+
+    var timestampEl = document.createElement("span");
+    timestampEl.classList.add("timestamp");
+    timestampEl.innerHTML = message.timestamp ?
+      message.timestamp :
+      Pi.timeStamp();
+    rowEl.appendChild(timestampEl);
+
+    var nicknameEl = document.createElement("span");
+    nicknameEl.classList.add("nickname");
+    nicknameEl.innerHTML = typeof message.broadcast !== "undefined" ?
+      (message.broadcast.length < 8) ? message.broadcast : message.broadcast.substring(0, 5) + "..." :
+      Pi.langEl.options[Pi.langEl.selectedIndex].value === "fi" ?
+        "sinä" :
+        "you";
+    rowEl.appendChild(nicknameEl);
+
+    var textEl = document.createElement("span");
+    textEl.classList.add("text");
+    textEl.innerHTML = message.text;
+    rowEl.appendChild(textEl);
+
+    if(typeof message.lang === "string") {
+      var langEl = document.createElement("span");
+      langEl.classList.add("lang");
+      langEl.innerHTML = message.lang;
+      rowEl.appendChild(langEl);
     }
-    else {
-      // prevent printing multiple messages at the same time
-      setTimeout(function() {
-        Pi.handleReceiveChat(message);
-      }, 500);
+
+    Pi.outEl.appendChild(rowEl);
+    var scrollDiff = Pi.outEl.scrollTop + Pi.outEl.offsetHeight - Pi.outEl.scrollHeight;
+    if(scrollDiff < 0) {
+      Pi.outEl.scrollTop -= scrollDiff;
     }
   };
 

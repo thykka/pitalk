@@ -17,6 +17,7 @@ app.get('/', function (req, res) {
 app.use(express.static('public'));
 
 var SPEAKING = false;
+var LASTLANG = "";
 
 io.on("connection", function(socket) {
   console.log("Connected: " + socket.client.conn.id + " (" + socket.handshake.headers['user-agent'] + ")");
@@ -24,14 +25,23 @@ io.on("connection", function(socket) {
   socket.on("speak", function (message) {
     if(!SPEAKING) {
       SPEAKING = true;
+
       say(message, function () {
-        message.timestamp = getTimestamp();
-
-        socket.emit("chat", message);
-
-        message.broadcast = socket.client.conn.id;
-        socket.broadcast.emit("broadcast", message);
+        console.log("Finished talking.");
       });
+
+      message.timestamp = getTimestamp();
+
+      if(LASTLANG === message.lang) {
+        delete message.lang;
+      } else {
+        LASTLANG = message.lang;
+      }
+
+      socket.emit("chat", message);
+
+      message.broadcast = socket.client.conn.id;
+      socket.broadcast.emit("broadcast", message);
     }
   });
 
@@ -57,11 +67,17 @@ function say (message, cb) {
     "-s180", // speed in WPM
     "-k5", // capitals pitch
     "-x", // phonemes to STDOUT
-    "-v", "en-UK"
+    //"-v", "en-UK"
   ];
+
+  if(message.hasOwnProperty("lang") && typeof message.lang === "string") {
+    options.push("-v");
+    options.push(message.lang);
+  }
+
   options.push(message.text);
 
-  console.log("Message: " + message.text);
+  console.log(message);
 
   var espeak = spawn(cmdName, options);
   espeak.on('error', function(err) { console.log(err); });

@@ -7,11 +7,14 @@
   <link rel="stylesheet" href="style.css">
   <body>
     <div class="screen">
-      <div class="output">
-        <code id="pi-output"></code>
-      </div>
+      <div class="output" id="pi-output"></div>
       <div class="input">
         <input type="text" name="command" id="pi-command">
+        <select name="lang" id="pi-lang">
+          <option value="en-US">en-US</option>
+          <option value="en-UK">en-UK</option>
+          <option value="fi">fi</option>
+        </select>
         <button id="pi-send">&crarr;</button>
       </div>
     </div>
