@@ -1,18 +1,16 @@
-remoteyt
+PiTalk
 ========
 
-This simple socket.io app allows playing and changing YouTube videos remotely.
+PiTalk utilizes [espeak](http://linux.die.net/man/1/espeak) to vocalize messages sent by users via a web chat interface. Depends on [oggenc](http://linux.die.net/man/1/oggenc) and [aplay](http://linux.die.net/man/1/aplay) for transcoding and local playback (I've a Raspberry Pi connected to a speaker for this :)
 
 Usage
 =====
 
-1. Clone this repo to your server, install npm dependencies, run ```node server.js```
-2. Open one or more clients at your server's port 8008
-3. Paste a youtube video URL or ID to the input field and submit
-4. The specified video, if found, will begin to play on all connected clients
+1. Clone this repo to your server, install dependencies, run ```node server.js```
+2. Open one or more clients at your server's port 8888 with Chrome or similar
 
 Todo
 ====
-
-- Implement remote playback control (play/pause/seek/volume etc.)
-- Implement playlists/autoplay
+- Cross browser testing & style improvements
+- Scheduled mute
+- Nickname generator
