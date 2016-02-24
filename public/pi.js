@@ -3,10 +3,9 @@
   var Pi = {};
 
   var greeting = [
-    "Hello, I'm a talking Raspberry Pi!", "",
+    "", "", "", "", "", "", "", "", "", "", "", "", "Hello, I'm a talking Raspberry Pi!", "",
     "I'll speak aloud whatever you tell me to.",
-    "Just type your message below and press enter!", "",
-    "NOTE: While I speak quite loudly, my voice is not sent back to you over the Internet. Therefore you can only hear me if you're actually visiting my home.", ""
+    "Just type your message below and press enter!", "", "", ""
   ].join("\n");
 
 
@@ -26,6 +25,7 @@
     Pi.inEl = document.getElementById("pi-command");
     Pi.langEl = document.getElementById("pi-lang");
     Pi.btnEl = document.getElementById("pi-send");
+    Pi.playerEl = document.getElementById("pi-player");
     Pi.inEl.addEventListener("keypress", Pi.handleInput);
     Pi.langEl.addEventListener("change", Pi.handleLangChange);
     Pi.btnEl.addEventListener("click", Pi.handleSend);
@@ -37,8 +37,19 @@
     Pi.socket.on("broadcast", function(message) {
       Pi.handleReceiveChat(message, true);
     });
+    Pi.socket.on("sound", function(filename) {
+      console.log(filename);
+      Pi.playerEl.pause();
+      Pi.playerEl.src = filename;
+      Pi.playerEl.play();
+    });
 
     window.Pi = Pi;
+
+    Pi.pause = 1;
+    Pi.capitals = 3;
+    Pi.speed = 120;
+    Pi.pitch = 48;
 
     Pi.printMessage(greeting);
     Pi.inEl.focus();
@@ -72,7 +83,11 @@
     if(Pi.inEl.value !== "") {
       Pi.socket.emit("speak", {
         "text": Pi.inEl.value,
-        "lang": Pi.langEl.options[Pi.langEl.selectedIndex].value
+        "lang": Pi.langEl.options[Pi.langEl.selectedIndex].value,
+        "pitch": Pi.pitch,
+        "pause": Pi.pause,
+        "capitals": Pi.capitals,
+        "speed": Pi.speed
       });
       Pi.inEl.value = "";
     }
@@ -83,8 +98,7 @@
     var now = new Date();
     return [
       now.getHours(), ":",
-      ("0" + now.getMinutes()).substr(-2), ":",
-      ("0" + now.getSeconds()).substr(-2)
+      ("0" + now.getMinutes()).substr(-2)
     ].join("");
   };
 

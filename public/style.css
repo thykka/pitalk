@@ -102,6 +102,10 @@ body {
   }
 }
 
+video {
+  display: none;
+}
+
 .output .row:hover {
   background-color: rgba(0,0,0,0.2);
 }
@@ -121,13 +125,7 @@ body {
 .output .timestamp {
   overflow: hidden;
   flex-basis: 2.125rem;
-  transition: all .3s ease-out;
 }
-
-.output .row:hover .timestamp {
-  flex-basis: 3.5rem;
-}
-
 .output .nickname {
   opacity: 1;
   text-align: right;
