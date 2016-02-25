@@ -19,33 +19,40 @@ app.use(express.static('temp'));
 
 var SPEAKING = false;
 var LASTLANG = "";
+var USERS = 0;
+var beaconInterval;
 
 io.on("connection", function(socket) {
-  console.log("Connected: " + socket.client.conn.id + " (" + socket.handshake.headers['user-agent'] + ")");
+  console.log("+ " + socket.handshake.headers['user-agent']);
+  USERS += 1;
+
+  var beacon = makeStatusBeacon(socket);
+  socket.emit("beacon", beacon);
+  socket.broadcast.emit("beacon", beacon);
 
   socket.on("speak", function (message) {
     if(!SPEAKING) {
       SPEAKING = true;
+      beacon = makeStatusBeacon(socket);
+      socket.emit("beacon", beacon);
+      socket.broadcast.emit("beacon", beacon);
 
       say(message, function (msg, filename) {
         // finished talking
-        play(filename, function(filename) {
-          console.log("sound played. transcoding to ogg..");
+        play(filename, function() {
+          beacon = makeStatusBeacon(socket);
+          socket.emit("beacon", beacon);
+          socket.broadcast.emit("beacon", beacon);
+        });
+        wavToOgg(filename, function(file, newFile) {
+          deleteFile(file);
 
-          wavToOgg(filename, function(file, newFile) {
+          socket.emit("sound", newFile.replace("temp/", "") );
+          socket.broadcast.emit("sound", newFile.replace("temp/", "") );
 
-            console.log("encoded. deleting original & serving to client...");
-            deleteFile(file);
-
-            socket.emit("sound", newFile.replace("temp/", "") );
-            socket.broadcast.emit("sound", newFile.replace("temp/", "") );
-
-            console.log("Setting 1min delete timer for " + newFile);
-            setTimeout(function() {
-              console.log("deleting" + newFile);
-              deleteFile(newFile);
-            }, 1000 * 60);
-          });
+          setTimeout(function() {
+            deleteFile(newFile);
+          }, 1000 * 60);
         });
       });
 
@@ -65,9 +72,19 @@ io.on("connection", function(socket) {
   });
 
   socket.on("disconnect", function () {
-    console.log("Disconnected: " + socket.client.conn.id + " (" + socket.handshake.headers['user-agent'] + ")");
+    USERS -= 1;
+    console.log("- " + socket.handshake.headers['user-agent']);
+    beacon = makeStatusBeacon(socket);
+    socket.broadcast.emit("beacon", beacon);
   });
 });
+
+function makeStatusBeacon (socket) {
+  return {
+    users: USERS,
+    blocked: SPEAKING
+  };
+}
 
 function getTimestamp() {
   var now = new Date();
@@ -78,7 +95,6 @@ function getTimestamp() {
 }
 
 function play (filename, cb) {
-  console.log(filename);
   var aplay = spawn('aplay', [filename]);
   aplay.on('error', function(err) { console.log(err); });
   aplay.stdout.on('data', function() { /**/  });
@@ -105,7 +121,7 @@ function wavToOgg (file, cb) {
 
 function deleteFile (file) {
   fs.unlink(file, function(err) {
-    if(err) throw err;
+    if(err) console.log(err);
   });
 }
 
@@ -140,9 +156,13 @@ function say (message, cb) {
   var filename = "temp/" + Math.random().toString(36).substr(2, 5) + ".wav";
   options.push(filename);
 
+  if(message.text.length > 250) {
+    message.text = message.text.substring(0, 200);
+  }
+
   options.push(message.text);
 
-  console.log(message);
+  console.log("> " + message.text);
 
   var espeak = spawn(cmdName, options);
   espeak.on('error', function(err) { console.log(err); });
