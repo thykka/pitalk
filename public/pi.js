@@ -26,6 +26,7 @@
     Pi.langEl = document.getElementById("pi-lang");
     Pi.btnEl = document.getElementById("pi-send");
     Pi.playerEl = document.getElementById("pi-player");
+    Pi.usersEl = document.getElementById("pi-users");
     Pi.inEl.addEventListener("keypress", Pi.handleInput);
     Pi.langEl.addEventListener("change", Pi.handleLangChange);
     Pi.btnEl.addEventListener("click", Pi.handleSend);
@@ -38,10 +39,25 @@
       Pi.handleReceiveChat(message, true);
     });
     Pi.socket.on("sound", function(filename) {
-      console.log(filename);
       Pi.playerEl.pause();
       Pi.playerEl.src = filename;
       Pi.playerEl.play();
+    });
+    Pi.socket.on("beacon", function(beacon) {
+      console.log(beacon);
+      if(typeof beacon === "object") {
+        if(beacon.hasOwnProperty("users")) {
+          Pi.usersEl.innerHTML = beacon.users + " user" + (beacon.users == 1 ? "" : "s") + " online";
+        }
+        if(beacon.hasOwnProperty("blocked")) {
+          if(beacon.blocked) {
+            Pi.btnEl.setAttribute("disabled", "true");
+          }
+          else {
+            Pi.btnEl.removeAttribute("disabled");
+          }
+        }
+      }
     });
 
     window.Pi = Pi;
