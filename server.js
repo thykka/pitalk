@@ -42,7 +42,6 @@ var Pi = function () {
       typeof value !== "undefined" &&
       typeof socket !== "undefined"
      ) {
-      console.log("= " + key + " -> " + value);
       pi[key] = value;
       pi.sendBeacon(socket);
     }
@@ -78,12 +77,21 @@ io.on("connection", function(socket) {
   pi.setGlobal("users", pi.users + 1, socket);
 
   var username = generateSpiritAnimal();
-  console.log("+ " + username);
+  console.log([
+    "- (",
+    pi.users,
+    ") ",
+    username,
+    " [",
+    socket.request.connection.remoteAddress,
+    "] (",
+    socket.request.headers["user-agent"],
+    ")"].join(""));
 
   socket.on("speak", function (message) {
     if(!pi.speaking) {
+      console.log(username + "> " + message.text);
       pi.setGlobal("speaking", true, socket);
-
       say(message, function(msg, filename) {
         play(filename, function () {
           pi.setGlobal("speaking", false, socket);
@@ -117,7 +125,16 @@ io.on("connection", function(socket) {
 
   socket.on("disconnect", function () {
     pi.setGlobal("users", pi.users - 1, socket);
-    console.log("- " + socket.handshake.headers['user-agent']);
+    console.log([
+      "- (",
+      pi.users,
+      ") ",
+      username,
+      " [",
+      socket.request.connection.remoteAddress,
+      "] (",
+      socket.request.headers["user-agent"],
+      ")"].join(""));
   });
 });
 
@@ -215,8 +232,6 @@ function say (message, cb) {
   }
 
   options.push(message.text);
-
-  console.log("> " + message.text);
 
   var espeak = spawn(cmdName, options);
   espeak.on('error', function(err) { /**/ });
