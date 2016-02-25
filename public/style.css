@@ -188,6 +188,6 @@ li.users {
   color: #063;
   background: white;
 }
-input button:disabled {
+.input button:disabled {
   color: #000;
 }
