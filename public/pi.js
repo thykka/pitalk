@@ -11,7 +11,7 @@
 
   Pi.handleInput = function (evt) {
     // enter key sends
-    if(evt.charCode === 13) {
+    if(evt.charCode === 13 || evt.keyCode === 13) {
       Pi.handleSend(evt);
     }
   };
@@ -66,6 +66,10 @@
     Pi.capitals = 3;
     Pi.speed = 120;
     Pi.pitch = 48;
+
+    Pi.pitch = (Math.round(Math.random() * 98) + 1).toFixed(0);
+    Pi.speed = (Math.round(Math.random() * 140) + 60).toFixed(0);
+    Pi.pause = (Math.round(Math.random() * 8)).toFixed(0);
 
     Pi.printMessage(greeting);
     Pi.inEl.focus();
@@ -140,13 +144,6 @@
     else {
       nicknameEl.innerHTML = "???";
     }
-    /*
-    nicknameEl.innerHTML =
-        message.broadcast :
-        Pi.langEl.options[Pi.langEl.selectedIndex].value === "fi" ?
-          "sinä" :
-          "you";
-    */
     rowEl.appendChild(nicknameEl);
 
     var textEl = document.createElement("span");
@@ -164,7 +161,7 @@
     Pi.outEl.appendChild(rowEl);
     var scrollDiff = Pi.outEl.scrollTop + Pi.outEl.offsetHeight - Pi.outEl.scrollHeight;
     if(scrollDiff < 0) {
-      Pi.outEl.scrollTop -= scrollDiff;
+      Pi.outEl.scrollTop = Pi.outEl.scrollTop - scrollDiff;
     }
   };
 
