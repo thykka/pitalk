@@ -131,11 +131,22 @@
 
     var nicknameEl = document.createElement("span");
     nicknameEl.classList.add("nickname");
-    nicknameEl.innerHTML = typeof message.broadcast !== "undefined" ?
-      (message.broadcast.length < 8) ? message.broadcast : message.broadcast.substring(0, 5) + "..." :
-      Pi.langEl.options[Pi.langEl.selectedIndex].value === "fi" ?
-        "sinä" :
-        "you";
+    if (message.hasOwnProperty("broadcast")) {
+      nicknameEl.innerHTML = message.broadcast;
+    }
+    else if (message.hasOwnProperty("username")) {
+      nicknameEl.innerHTML = message.username;
+    }
+    else {
+      nicknameEl.innerHTML = "???";
+    }
+    /*
+    nicknameEl.innerHTML =
+        message.broadcast :
+        Pi.langEl.options[Pi.langEl.selectedIndex].value === "fi" ?
+          "sinä" :
+          "you";
+    */
     rowEl.appendChild(nicknameEl);
 
     var textEl = document.createElement("span");
