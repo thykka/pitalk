@@ -78,7 +78,7 @@ io.on("connection", function(socket) {
 
   var username = generateSpiritAnimal();
   console.log([
-    "- (",
+    "+ (",
     pi.users,
     ") ",
     username,

@@ -44,7 +44,6 @@
       Pi.playerEl.play();
     });
     Pi.socket.on("beacon", function(beacon) {
-      console.log(beacon);
       if(typeof beacon === "object") {
         if(beacon.hasOwnProperty("users")) {
           Pi.usersEl.innerHTML = beacon.users + " user" + (beacon.users == 1 ? "" : "s") + " online";
