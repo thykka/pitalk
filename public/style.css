@@ -125,6 +125,7 @@ video {
 .output .timestamp {
   overflow: hidden;
   flex-basis: 2.125rem;
+  min-width: 2.125rem;
 }
 .output .nickname {
   opacity: 1;
@@ -149,6 +150,9 @@ video {
   background-color: #FEB;
   color: #063;
   margin-left: auto;
+}
+li.users {
+  list-style-type: none;
 }
 
 .input {
@@ -183,4 +187,7 @@ video {
 .input button:active {
   color: #063;
   background: white;
+}
+.input button:disabled {
+  color: #000;
 }

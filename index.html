@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="style.css">
   <body>
     <div class="screen">
+      <ul class="status" id="pi-status">
+        <li class="users"><i id="pi-users"></i></li>
+      </ul>
       <div class="output" id="pi-output"></div>
       <div class="input">
         <input type="text" name="command" id="pi-command">
@@ -27,7 +30,7 @@
         <button id="pi-send">&crarr;</button>
       </div>
     </div>
-    <video controls autoplay name="media" id="pi-player">
+    <video autoplay name="media" id="pi-player">
       <source src="" type="audio/ogg">
     </video>
 

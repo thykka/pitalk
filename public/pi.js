@@ -11,7 +11,7 @@
 
   Pi.handleInput = function (evt) {
     // enter key sends
-    if(evt.charCode === 13) {
+    if(evt.charCode === 13 || evt.keyCode === 13) {
       Pi.handleSend(evt);
     }
   };
@@ -26,6 +26,7 @@
     Pi.langEl = document.getElementById("pi-lang");
     Pi.btnEl = document.getElementById("pi-send");
     Pi.playerEl = document.getElementById("pi-player");
+    Pi.usersEl = document.getElementById("pi-users");
     Pi.inEl.addEventListener("keypress", Pi.handleInput);
     Pi.langEl.addEventListener("change", Pi.handleLangChange);
     Pi.btnEl.addEventListener("click", Pi.handleSend);
@@ -38,10 +39,24 @@
       Pi.handleReceiveChat(message, true);
     });
     Pi.socket.on("sound", function(filename) {
-      console.log(filename);
       Pi.playerEl.pause();
       Pi.playerEl.src = filename;
       Pi.playerEl.play();
+    });
+    Pi.socket.on("beacon", function(beacon) {
+      if(typeof beacon === "object") {
+        if(beacon.hasOwnProperty("users")) {
+          Pi.usersEl.innerHTML = beacon.users + " user" + (beacon.users == 1 ? "" : "s") + " online";
+        }
+        if(beacon.hasOwnProperty("blocked")) {
+          if(beacon.blocked) {
+            Pi.btnEl.setAttribute("disabled", "true");
+          }
+          else {
+            Pi.btnEl.removeAttribute("disabled");
+          }
+        }
+      }
     });
 
     window.Pi = Pi;
@@ -50,6 +65,10 @@
     Pi.capitals = 3;
     Pi.speed = 120;
     Pi.pitch = 48;
+
+    Pi.pitch = (Math.round(Math.random() * 98) + 1).toFixed(0);
+    Pi.speed = (Math.round(Math.random() * 140) + 60).toFixed(0);
+    Pi.pause = (Math.round(Math.random() * 8)).toFixed(0);
 
     Pi.printMessage(greeting);
     Pi.inEl.focus();
@@ -115,11 +134,15 @@
 
     var nicknameEl = document.createElement("span");
     nicknameEl.classList.add("nickname");
-    nicknameEl.innerHTML = typeof message.broadcast !== "undefined" ?
-      (message.broadcast.length < 8) ? message.broadcast : message.broadcast.substring(0, 5) + "..." :
-      Pi.langEl.options[Pi.langEl.selectedIndex].value === "fi" ?
-        "sinä" :
-        "you";
+    if (message.hasOwnProperty("broadcast")) {
+      nicknameEl.innerHTML = message.broadcast;
+    }
+    else if (message.hasOwnProperty("username")) {
+      nicknameEl.innerHTML = message.username;
+    }
+    else {
+      nicknameEl.innerHTML = "???";
+    }
     rowEl.appendChild(nicknameEl);
 
     var textEl = document.createElement("span");
@@ -137,7 +160,7 @@
     Pi.outEl.appendChild(rowEl);
     var scrollDiff = Pi.outEl.scrollTop + Pi.outEl.offsetHeight - Pi.outEl.scrollHeight;
     if(scrollDiff < 0) {
-      Pi.outEl.scrollTop -= scrollDiff;
+      Pi.outEl.scrollTop = Pi.outEl.scrollTop - scrollDiff;
     }
   };
 
