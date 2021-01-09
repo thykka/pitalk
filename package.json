@@ -8,7 +8,7 @@
     "start": "node server.js"
   },
   "author": "Moses Holmström",
-  "license": "AGPL-3.0",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "express": "^4.13.3",
     "socket.io": "^1.3.7"
